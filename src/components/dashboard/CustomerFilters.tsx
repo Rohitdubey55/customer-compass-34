@@ -1,4 +1,4 @@
-import { X, Filter } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -14,9 +14,10 @@ interface LeadFiltersProps {
   filters: FilterType;
   filterOptions: {
     leadOrigins: string[];
-    teamTypes: string[];
+    pimOrCm: string[];
     managementLeads: string[];
     deliveryLeads: string[];
+    strategicOwners: string[];
   };
   onUpdateFilter: <K extends keyof FilterType>(key: K, value: FilterType[K]) => void;
   onClearFilters: () => void;
@@ -31,7 +32,7 @@ export function LeadFilters({
   hasActiveFilters,
 }: LeadFiltersProps) {
   const toggleArrayFilter = (
-    key: 'leadOrigins' | 'teamTypes' | 'managementLeads' | 'deliveryLeads',
+    key: 'leadOrigins' | 'pimOrCm' | 'managementLeads' | 'deliveryLeads' | 'strategicOwners',
     value: string
   ) => {
     const current = filters[key];
@@ -43,10 +44,12 @@ export function LeadFilters({
 
   const activeFilterCount = 
     filters.leadOrigins.length + 
-    filters.teamTypes.length + 
+    filters.pimOrCm.length + 
     filters.managementLeads.length +
     filters.deliveryLeads.length +
-    (filters.hasIntroMeeting !== null ? 1 : 0);
+    filters.strategicOwners.length +
+    (filters.hasIntroMeeting !== null ? 1 : 0) +
+    (filters.hasLoi !== null ? 1 : 0);
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -87,30 +90,30 @@ export function LeadFilters({
         </PopoverContent>
       </Popover>
 
-      {/* Team Type Filter */}
+      {/* PIM/CM Filter */}
       <Popover>
         <PopoverTrigger asChild>
           <Button 
-            variant={filters.teamTypes.length > 0 ? "default" : "outline"} 
+            variant={filters.pimOrCm.length > 0 ? "default" : "outline"} 
             size="sm"
             className="h-8"
           >
-            Team
-            {filters.teamTypes.length > 0 && (
+            PIM/CM
+            {filters.pimOrCm.length > 0 && (
               <Badge variant="secondary" className="ml-1 h-5 px-1.5 bg-primary-foreground/20">
-                {filters.teamTypes.length}
+                {filters.pimOrCm.length}
               </Badge>
             )}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-36 p-2" align="start">
           <div className="space-y-1">
-            {filterOptions.teamTypes.map(type => (
+            {filterOptions.pimOrCm.map(type => (
               <div key={type} className="flex items-center gap-2 py-1 px-1 rounded hover:bg-accent">
                 <Checkbox
                   id={`type-${type}`}
-                  checked={filters.teamTypes.includes(type)}
-                  onCheckedChange={() => toggleArrayFilter('teamTypes', type)}
+                  checked={filters.pimOrCm.includes(type)}
+                  onCheckedChange={() => toggleArrayFilter('pimOrCm', type)}
                 />
                 <Label 
                   htmlFor={`type-${type}`} 
@@ -161,6 +164,43 @@ export function LeadFilters({
         </PopoverContent>
       </Popover>
 
+      {/* Strategic Owner Filter */}
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button 
+            variant={filters.strategicOwners.length > 0 ? "default" : "outline"} 
+            size="sm"
+            className="h-8"
+          >
+            Strategic Owner
+            {filters.strategicOwners.length > 0 && (
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5 bg-primary-foreground/20">
+                {filters.strategicOwners.length}
+              </Badge>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-48 p-2 max-h-60 overflow-auto" align="start">
+          <div className="space-y-1">
+            {filterOptions.strategicOwners.map(owner => (
+              <div key={owner} className="flex items-center gap-2 py-1 px-1 rounded hover:bg-accent">
+                <Checkbox
+                  id={`owner-${owner}`}
+                  checked={filters.strategicOwners.includes(owner)}
+                  onCheckedChange={() => toggleArrayFilter('strategicOwners', owner)}
+                />
+                <Label 
+                  htmlFor={`owner-${owner}`} 
+                  className="flex-1 cursor-pointer text-sm"
+                >
+                  {owner}
+                </Label>
+              </div>
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
+
       {/* Intro Meeting Filter */}
       <Popover>
         <PopoverTrigger asChild>
@@ -197,6 +237,50 @@ export function LeadFilters({
             </button>
             <button
               onClick={() => onUpdateFilter('hasIntroMeeting', null)}
+              className="w-full text-left px-2 py-1.5 rounded text-sm text-muted-foreground hover:bg-accent/50"
+            >
+              All
+            </button>
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      {/* LOI Filter */}
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button 
+            variant={filters.hasLoi !== null ? "default" : "outline"} 
+            size="sm"
+            className="h-8"
+          >
+            LOI
+            {filters.hasLoi !== null && (
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5 bg-primary-foreground/20">
+                {filters.hasLoi ? '✓' : '✗'}
+              </Badge>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-40 p-2" align="start">
+          <div className="space-y-1">
+            <button
+              onClick={() => onUpdateFilter('hasLoi', true)}
+              className={`w-full text-left px-2 py-1.5 rounded text-sm ${
+                filters.hasLoi === true ? 'bg-accent' : 'hover:bg-accent/50'
+              }`}
+            >
+              ✓ Has LOI
+            </button>
+            <button
+              onClick={() => onUpdateFilter('hasLoi', false)}
+              className={`w-full text-left px-2 py-1.5 rounded text-sm ${
+                filters.hasLoi === false ? 'bg-accent' : 'hover:bg-accent/50'
+              }`}
+            >
+              ✗ No LOI
+            </button>
+            <button
+              onClick={() => onUpdateFilter('hasLoi', null)}
               className="w-full text-left px-2 py-1.5 rounded text-sm text-muted-foreground hover:bg-accent/50"
             >
               All

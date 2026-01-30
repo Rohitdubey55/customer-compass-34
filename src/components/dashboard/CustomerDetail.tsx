@@ -5,22 +5,23 @@ import {
   Truck,
   ExternalLink, 
   Copy, 
-  Download, 
   FileJson, 
   FileText,
   Check,
   X,
-  ClipboardList,
+  Calendar,
   CheckCircle2,
-  XCircle
+  XCircle,
+  User
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Lead } from '@/types/customer';
-import { LeadOriginBadge, TeamTypeBadge, StatusIndicator } from './StatusBadge';
+import { LeadOriginBadge, PimCmBadge, LoiBadge } from './StatusBadge';
 import { exportToJSON, exportToCSV, copyToClipboard } from '@/lib/export';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { format, parseISO, isValid } from 'date-fns';
 
 interface LeadDetailProps {
   lead: Lead | null;
@@ -54,6 +55,36 @@ function DetailRow({
   );
 }
 
+function StatusRow({ label, value }: { label: string; value: boolean | string }) {
+  const isYes = value === true || value === 'Yes';
+  return (
+    <div className="flex items-center justify-between py-1">
+      <span className="text-sm text-muted-foreground">{label}</span>
+      <span className={cn(
+        'text-sm font-medium',
+        isYes ? 'text-green-600' : 'text-muted-foreground'
+      )}>
+        {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : (value || 'No')}
+      </span>
+    </div>
+  );
+}
+
+function formatDate(dateStr: string): string {
+  if (!dateStr) return '';
+  if (dateStr.toLowerCase().includes('hold')) return 'On Hold';
+  
+  try {
+    const date = parseISO(dateStr);
+    if (isValid(date)) {
+      return format(date, 'MMM d, yyyy');
+    }
+  } catch {
+    // Return as-is if parsing fails
+  }
+  return dateStr;
+}
+
 export function LeadDetail({ 
   lead, 
   localNotes, 
@@ -61,7 +92,7 @@ export function LeadDetail({
   onClose,
   isMobile 
 }: LeadDetailProps) {
-  const [copiedNextSteps, setCopiedNextSteps] = useState(false);
+  const [copiedProgress, setCopiedProgress] = useState(false);
 
   if (!lead) {
     return (
@@ -75,12 +106,12 @@ export function LeadDetail({
     );
   }
 
-  const handleCopyNextSteps = async () => {
+  const handleCopyProgress = async () => {
     try {
-      await copyToClipboard(lead.nextSteps);
-      setCopiedNextSteps(true);
-      toast({ title: 'Next steps copied to clipboard' });
-      setTimeout(() => setCopiedNextSteps(false), 2000);
+      await copyToClipboard(lead.currentProgress);
+      setCopiedProgress(true);
+      toast({ title: 'Progress copied to clipboard' });
+      setTimeout(() => setCopiedProgress(false), 2000);
     } catch {
       toast({ title: 'Failed to copy', variant: 'destructive' });
     }
@@ -91,12 +122,12 @@ export function LeadDetail({
       ...lead,
       localNotes: localNotes[lead.id] || ''
     };
-    exportToJSON(exportData, `lead-${lead.id}`);
+    exportToJSON(exportData, `lead-${lead.customer.replace(/\s+/g, '-').toLowerCase()}`);
     toast({ title: 'Exported as JSON' });
   };
 
   const handleExportCSV = () => {
-    exportToCSV([lead], `lead-${lead.id}`);
+    exportToCSV([lead], `lead-${lead.customer.replace(/\s+/g, '-').toLowerCase()}`);
     toast({ title: 'Exported as CSV' });
   };
 
@@ -117,11 +148,12 @@ export function LeadDetail({
           </div>
           <div className="min-w-0">
             <h2 className="font-semibold text-lg truncate">
-              {lead.company || lead.managementLead || 'Unnamed Lead'}
+              {lead.customer}
             </h2>
-            <div className="flex items-center gap-2 mt-0.5">
+            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
               <LeadOriginBadge origin={lead.leadOrigin} />
-              <TeamTypeBadge type={lead.teamType} />
+              <PimCmBadge type={lead.pimOrCm} />
+              <LoiBadge issued={lead.loiIssued} signed={lead.loiSigned} />
             </div>
           </div>
         </div>
@@ -137,7 +169,7 @@ export function LeadDetail({
         {/* Status Indicators */}
         <div className="flex items-center gap-4 p-3 rounded-lg bg-muted/50">
           <div className="flex items-center gap-2">
-            {lead.hasIntroMeeting ? (
+            {lead.introductoryMeeting ? (
               <CheckCircle2 className="h-5 w-5 text-green-500" />
             ) : (
               <XCircle className="h-5 w-5 text-gray-300" />
@@ -145,13 +177,34 @@ export function LeadDetail({
             <span className="text-sm">Intro Meeting</span>
           </div>
           <div className="flex items-center gap-2">
-            {lead.hasWeeklyCalls ? (
+            {lead.weeklyCalls === 'Yes' ? (
               <CheckCircle2 className="h-5 w-5 text-green-500" />
             ) : (
               <XCircle className="h-5 w-5 text-gray-300" />
             )}
             <span className="text-sm">Weekly Calls</span>
           </div>
+        </div>
+
+        {/* Contact Info */}
+        <div className="space-y-4">
+          <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Contact Information
+          </h3>
+          
+          <DetailRow icon={User} label="Customer Contact">
+            {lead.customerContact || <span className="text-muted-foreground italic">Not provided</span>}
+          </DetailRow>
+
+          {lead.midLevelManager && (
+            <DetailRow icon={User} label="Mid-Level Manager">
+              {lead.midLevelManager}
+            </DetailRow>
+          )}
+
+          <DetailRow icon={User} label="Strategic Owner">
+            {lead.strategicOwner || <span className="text-muted-foreground italic">Not assigned</span>}
+          </DetailRow>
         </div>
 
         {/* Team Info */}
@@ -169,20 +222,57 @@ export function LeadDetail({
           </DetailRow>
         </div>
 
-        {/* Next Steps */}
+        {/* Pipeline Status */}
+        <div className="space-y-3">
+          <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Pipeline Status
+          </h3>
+          <div className="p-3 rounded-lg bg-muted/50 space-y-1">
+            <StatusRow label="PPTs Shared" value={lead.pptsShared} />
+            <StatusRow label="Verbal Agreement" value={lead.verbalAgreement} />
+            <StatusRow label="NDA Signed" value={lead.ndaSigned} />
+            <StatusRow label="LOI Issued" value={lead.loiIssued} />
+            <StatusRow label="LOI Signed" value={lead.loiSigned} />
+            <StatusRow label="Contract Signed" value={lead.contractSigned} />
+            <StatusRow label="Parts & Spend Received" value={lead.partsSpendReceived} />
+          </div>
+        </div>
+
+        {/* Dates */}
+        {(lead.nextFollowup || lead.lastMeeting) && (
+          <div className="space-y-4">
+            <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Dates
+            </h3>
+            
+            {lead.nextFollowup && (
+              <DetailRow icon={Calendar} label="Next Followup">
+                {formatDate(lead.nextFollowup)}
+              </DetailRow>
+            )}
+
+            {lead.lastMeeting && (
+              <DetailRow icon={Calendar} label="Last Meeting">
+                {formatDate(lead.lastMeeting)}
+              </DetailRow>
+            )}
+          </div>
+        )}
+
+        {/* Current Progress */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Next Steps / Current Progress
+              Current Progress
             </h3>
-            {lead.nextSteps && (
+            {lead.currentProgress && (
               <Button 
                 variant="ghost" 
                 size="sm" 
                 className="h-6 px-2"
-                onClick={handleCopyNextSteps}
+                onClick={handleCopyProgress}
               >
-                {copiedNextSteps ? (
+                {copiedProgress ? (
                   <Check className="h-3.5 w-3.5 text-primary" />
                 ) : (
                   <Copy className="h-3.5 w-3.5" />
@@ -191,28 +281,28 @@ export function LeadDetail({
             )}
           </div>
           <div className="p-3 rounded-lg bg-muted/50 text-sm">
-            {lead.nextSteps || <span className="text-muted-foreground italic">No next steps defined</span>}
+            {lead.currentProgress || <span className="text-muted-foreground italic">No progress notes</span>}
           </div>
         </div>
 
         {/* Additional Info */}
-        {(lead.info || lead.commodities) && (
+        {(lead.commodities || lead.spend) && (
           <div className="space-y-3">
             <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Additional Information
             </h3>
             
-            {lead.info && (
-              <div className="p-3 rounded-lg bg-muted/50 text-sm">
-                <div className="text-xs text-muted-foreground mb-1">Info</div>
-                {lead.info}
-              </div>
-            )}
-            
             {lead.commodities && (
               <div className="p-3 rounded-lg bg-muted/50 text-sm">
                 <div className="text-xs text-muted-foreground mb-1">Commodities</div>
                 {lead.commodities}
+              </div>
+            )}
+            
+            {lead.spend && (
+              <div className="p-3 rounded-lg bg-muted/50 text-sm">
+                <div className="text-xs text-muted-foreground mb-1">Spend</div>
+                {lead.spend}
               </div>
             )}
           </div>

@@ -1,7 +1,7 @@
 import { Lead, LeadApiResponse } from '@/types/customer';
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbwsIP0OipyJRA6uG6dmvMO4RdiOSegyVOaIfXovR0HJpyRnlq0DmzLG1Bh0GtEishLvtA/exec';
-const CACHE_KEY = 'leads_v2';
+const API_URL = 'https://script.google.com/macros/s/AKfycbypx_E-8wEvZc0os8z1ujejISPfTaG3MZHTEUeC2ABpZIKtPit6jJ5GQJxg0Zuy8abDxA/exec';
+const CACHE_KEY = 'leads_v3';
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
 interface CachedData {
@@ -68,40 +68,59 @@ async function fetchWithRetry(url: string, retries = 3, delay = 1000): Promise<R
 
 // Transform raw sheet data to Lead objects
 interface RawSheetRow {
-  '': string;  // Column 1 - company name
-  'Phase 0': string;  // Lead Origin
-  'Basic Information (Sales Team)': string;  // PIM or CM
-  'Phase 1': string;  // Management Lead
-  'Push for Pilot + LOI (Management Team)': boolean | string;  // Intro Meeting
-  'Phase 2': string;  // Delivery Lead
-  'Pilot + Spend Rampup (Delivery Team)': string | boolean;  // Weekly calls
-  'Next Steps': string;  // Current Progress
-  '*Info': string;  // Additional info
-  'Additional Info': string;  // Commodities
+  'Customer': string;
+  'Lead Origin': string;
+  'PIM or CM': string;
+  'Customer Point of Contact': string;
+  'Mid Level Manager (Customer)': string;
+  'Strategic Owner': string;
+  'Management Lead': string;
+  'Delivery Lead': string;
+  'Introductory Meeting': boolean;
+  'PPTs Shared': string;
+  'Verbal Agreement': string;
+  'NDA Signed': string;
+  'LOI Issued': boolean;
+  'LOI Signed': boolean;
+  'Last Meeting': string;
+  'Weekly savings production call': string;
+  'Parts & Spend Received': string;
+  'Next Followup Meeting': string;
+  'Contract Signed': string;
+  'Current Progress': string;
+  'Commodities': string;
+  'Spend': string;
 }
 
 function transformSheetData(rawData: RawSheetRow[]): Lead[] {
-  // Skip the header row (first row contains column descriptions)
-  const dataRows = rawData.slice(1);
-  
-  return dataRows
+  return rawData
     .map((row, index) => ({
       id: `lead_${index + 1}`,
-      company: row[''] || '',
-      leadOrigin: row['Phase 0'] || '',
-      teamType: row['Basic Information (Sales Team)'] || '',
-      managementLead: row['Phase 1'] || '',
-      hasIntroMeeting: row['Push for Pilot + LOI (Management Team)'] === true || 
-                       row['Push for Pilot + LOI (Management Team)'] === 'true',
-      deliveryLead: row['Phase 2'] || '',
-      hasWeeklyCalls: String(row['Pilot + Spend Rampup (Delivery Team)']).toLowerCase() === 'yes' || 
-                      row['Pilot + Spend Rampup (Delivery Team)'] === true,
-      nextSteps: row['Next Steps'] || '',
-      info: row['*Info'] || '',
-      commodities: row['Additional Info'] || '',
+      customer: (row['Customer'] || '').trim(),
+      leadOrigin: row['Lead Origin'] || '',
+      pimOrCm: row['PIM or CM'] || '',
+      customerContact: row['Customer Point of Contact'] || '',
+      midLevelManager: row['Mid Level Manager (Customer)'] || '',
+      strategicOwner: row['Strategic Owner'] || '',
+      managementLead: row['Management Lead'] || '',
+      deliveryLead: row['Delivery Lead'] || '',
+      introductoryMeeting: row['Introductory Meeting'] === true,
+      pptsShared: row['PPTs Shared'] || '',
+      verbalAgreement: row['Verbal Agreement'] || '',
+      ndaSigned: row['NDA Signed'] || '',
+      loiIssued: row['LOI Issued'] === true,
+      loiSigned: row['LOI Signed'] === true,
+      lastMeeting: row['Last Meeting'] || '',
+      weeklyCalls: row['Weekly savings production call'] || '',
+      partsSpendReceived: row['Parts & Spend Received'] || '',
+      nextFollowup: row['Next Followup Meeting'] || '',
+      contractSigned: row['Contract Signed'] || '',
+      currentProgress: row['Current Progress'] || '',
+      commodities: row['Commodities'] || '',
+      spend: row['Spend'] || '',
     }))
     // Filter out completely empty rows
-    .filter(lead => lead.company || lead.leadOrigin || lead.managementLead || lead.nextSteps);
+    .filter(lead => lead.customer);
 }
 
 export async function fetchLeads(forceRefresh = false): Promise<LeadApiResponse> {

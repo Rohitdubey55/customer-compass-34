@@ -1,16 +1,28 @@
-// Types matching the actual Google Sheet structure
+// Types matching the new Google Sheet structure
 export interface Lead {
   id: string;
-  company: string;  // Column 1 (first empty-key column)
-  leadOrigin: string;  // Phase 0
-  teamType: string;  // Basic Information (Sales Team) - PIM or CM
-  managementLead: string;  // Phase 1
-  hasIntroMeeting: boolean;  // Push for Pilot + LOI (Management Team)
-  deliveryLead: string;  // Phase 2
-  hasWeeklyCalls: boolean | string;  // Pilot + Spend Rampup (Delivery Team)
-  nextSteps: string;  // Next Steps / Current Progress
-  info: string;  // *Info
-  commodities: string;  // Additional Info
+  customer: string;
+  leadOrigin: string;
+  pimOrCm: string;
+  customerContact: string;
+  midLevelManager: string;
+  strategicOwner: string;
+  managementLead: string;
+  deliveryLead: string;
+  introductoryMeeting: boolean;
+  pptsShared: string;
+  verbalAgreement: string;
+  ndaSigned: string;
+  loiIssued: boolean;
+  loiSigned: boolean;
+  lastMeeting: string;
+  weeklyCalls: string;
+  partsSpendReceived: string;
+  nextFollowup: string;
+  contractSigned: string;
+  currentProgress: string;
+  commodities: string;
+  spend: string;
 }
 
 export interface LeadApiResponse {
@@ -25,52 +37,18 @@ export interface LeadApiResponse {
 export interface LeadFilters {
   search: string;
   leadOrigins: string[];
-  teamTypes: string[];
+  pimOrCm: string[];
   managementLeads: string[];
   deliveryLeads: string[];
+  strategicOwners: string[];
   hasIntroMeeting: boolean | null;
+  hasLoi: boolean | null;
 }
 
-export type SortField = 'company' | 'leadOrigin' | 'managementLead' | 'deliveryLead';
+export type SortField = 'customer' | 'leadOrigin' | 'managementLead' | 'deliveryLead' | 'nextFollowup';
 export type SortDirection = 'asc' | 'desc';
 
 export interface SortConfig {
   field: SortField;
   direction: SortDirection;
-}
-
-// Keep old Customer type for backwards compatibility if needed
-export interface Customer {
-  id: string;
-  name: string;
-  company: string;
-  email: string;
-  phone: string;
-  region: string;
-  status: 'Prospect' | 'Active' | 'Churned' | 'Lead' | string;
-  tier: 'Tier 1' | 'Tier 2' | 'Tier 3' | string;
-  last_contacted: string;
-  notes: string;
-  attachments: string[];
-  custom_fields?: Record<string, string>;
-}
-
-export interface CustomerApiResponse {
-  meta: {
-    source: string;
-    fetched_at: string;
-    count: number;
-  };
-  data: Customer[];
-}
-
-export interface CustomerFilters {
-  search: string;
-  regions: string[];
-  statuses: string[];
-  tiers: string[];
-  dateRange: {
-    from: Date | null;
-    to: Date | null;
-  };
 }

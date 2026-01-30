@@ -3,7 +3,7 @@ import { Search, X, Building2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Lead } from '@/types/customer';
 import { cn } from '@/lib/utils';
-import { LeadOriginBadge, TeamTypeBadge } from './StatusBadge';
+import { LeadOriginBadge } from './StatusBadge';
 
 interface LeadSearchProps {
   leads: Lead[];
@@ -23,10 +23,11 @@ export function LeadSearch({ leads, onSelect, selectedId }: LeadSearchProps) {
     const searchLower = query.toLowerCase();
     return leads
       .filter(l => 
-        l.company.toLowerCase().includes(searchLower) ||
+        l.customer.toLowerCase().includes(searchLower) ||
         l.managementLead.toLowerCase().includes(searchLower) ||
         l.deliveryLead.toLowerCase().includes(searchLower) ||
-        l.nextSteps.toLowerCase().includes(searchLower)
+        l.customerContact.toLowerCase().includes(searchLower) ||
+        l.currentProgress.toLowerCase().includes(searchLower)
       )
       .slice(0, 8);
   }, [query, leads]);
@@ -106,7 +107,7 @@ export function LeadSearch({ leads, onSelect, selectedId }: LeadSearchProps) {
         <Input
           ref={inputRef}
           type="text"
-          placeholder="Search leads, companies, people…"
+          placeholder="Search leads, customers, contacts…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -163,13 +164,13 @@ export function LeadSearch({ leads, onSelect, selectedId }: LeadSearchProps) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="font-medium truncate">
-                    {lead.company || lead.managementLead || 'Unnamed Lead'}
+                    {lead.customer || lead.managementLead || 'Unnamed Lead'}
                   </span>
                   <LeadOriginBadge origin={lead.leadOrigin} />
                 </div>
                 <div className="text-sm text-muted-foreground truncate">
-                  {lead.managementLead && `${lead.managementLead}`}
-                  {lead.deliveryLead && ` → ${lead.deliveryLead}`}
+                  {lead.customerContact && `${lead.customerContact}`}
+                  {lead.managementLead && ` • ${lead.managementLead}`}
                 </div>
               </div>
             </button>

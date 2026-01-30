@@ -53,13 +53,14 @@ export function useCustomers() {
     
     try {
       const response: CustomerApiResponse = await fetchCustomers(forceRefresh);
-      setCustomers(response.data);
+      const data = Array.isArray(response?.data) ? response.data : [];
+      setCustomers(data);
       setLastUpdated(getLastUpdatedTime());
       
       if (forceRefresh) {
         toast({
           title: 'Data refreshed',
-          description: `Loaded ${response.data.length} customers`,
+          description: `Loaded ${data.length} customers`,
         });
       }
     } catch (err) {
@@ -85,15 +86,19 @@ export function useCustomers() {
   }, [loadCustomers]);
 
   // Extract unique filter options from data
-  const filterOptions = useMemo(() => ({
-    regions: [...new Set(customers.map(c => c.region))].filter(Boolean).sort(),
-    statuses: [...new Set(customers.map(c => c.status))].filter(Boolean).sort(),
-    tiers: [...new Set(customers.map(c => c.tier))].filter(Boolean).sort(),
-  }), [customers]);
+  const filterOptions = useMemo(() => {
+    const safeCustomers = customers || [];
+    return {
+      regions: [...new Set(safeCustomers.map(c => c.region))].filter(Boolean).sort(),
+      statuses: [...new Set(safeCustomers.map(c => c.status))].filter(Boolean).sort(),
+      tiers: [...new Set(safeCustomers.map(c => c.tier))].filter(Boolean).sort(),
+    };
+  }, [customers]);
 
   // Apply filters and sorting
   const filteredCustomers = useMemo(() => {
-    let result = [...customers];
+    const safeCustomers = customers || [];
+    let result = [...safeCustomers];
 
     // Text search
     if (filters.search) {
@@ -165,7 +170,8 @@ export function useCustomers() {
 
   const selectedCustomer = useMemo(() => {
     if (!selectedCustomerId) return null;
-    return customers.find(c => c.id === selectedCustomerId) || null;
+    const safeCustomers = customers || [];
+    return safeCustomers.find(c => c.id === selectedCustomerId) || null;
   }, [customers, selectedCustomerId]);
 
   const toggleSort = useCallback((field: SortConfig['field']) => {

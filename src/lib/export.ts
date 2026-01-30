@@ -11,30 +11,50 @@ export function exportToCSV(leads: Lead[], filename: string): void {
 
   const headers = [
     'ID',
-    'Company',
+    'Customer',
     'Lead Origin',
-    'Team Type',
+    'PIM or CM',
+    'Customer Contact',
+    'Strategic Owner',
     'Management Lead',
-    'Intro Meeting',
     'Delivery Lead',
+    'Intro Meeting',
+    'PPTs Shared',
+    'Verbal Agreement',
+    'NDA Signed',
+    'LOI Issued',
+    'LOI Signed',
     'Weekly Calls',
-    'Next Steps',
-    'Info',
-    'Commodities'
+    'Parts & Spend Received',
+    'Next Followup',
+    'Contract Signed',
+    'Current Progress',
+    'Commodities',
+    'Spend'
   ];
 
   const rows = leads.map(l => [
     l.id,
-    escapeCsvValue(l.company),
+    escapeCsvValue(l.customer),
     escapeCsvValue(l.leadOrigin),
-    l.teamType,
+    l.pimOrCm,
+    escapeCsvValue(l.customerContact),
+    escapeCsvValue(l.strategicOwner),
     escapeCsvValue(l.managementLead),
-    l.hasIntroMeeting ? 'Yes' : 'No',
     escapeCsvValue(l.deliveryLead),
-    l.hasWeeklyCalls ? 'Yes' : 'No',
-    escapeCsvValue(l.nextSteps),
-    escapeCsvValue(l.info),
-    escapeCsvValue(l.commodities)
+    l.introductoryMeeting ? 'Yes' : 'No',
+    l.pptsShared,
+    l.verbalAgreement,
+    l.ndaSigned,
+    l.loiIssued ? 'Yes' : 'No',
+    l.loiSigned ? 'Yes' : 'No',
+    l.weeklyCalls,
+    l.partsSpendReceived,
+    escapeCsvValue(l.nextFollowup),
+    l.contractSigned,
+    escapeCsvValue(l.currentProgress),
+    escapeCsvValue(l.commodities),
+    escapeCsvValue(l.spend)
   ]);
 
   const csvContent = [

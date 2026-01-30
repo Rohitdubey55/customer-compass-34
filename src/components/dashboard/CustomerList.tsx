@@ -1,7 +1,8 @@
 import { ArrowUpDown, ArrowUp, ArrowDown, Building2 } from 'lucide-react';
 import { Lead, SortConfig, SortField } from '@/types/customer';
-import { LeadOriginBadge, TeamTypeBadge, StatusIndicator } from './StatusBadge';
+import { LeadOriginBadge, PimCmBadge, StatusIndicator, LoiBadge } from './StatusBadge';
 import { cn } from '@/lib/utils';
+import { format, parseISO, isValid } from 'date-fns';
 
 interface LeadListProps {
   leads: Lead[];
@@ -72,6 +73,21 @@ function LeadRowSkeleton() {
   );
 }
 
+function formatFollowupDate(dateStr: string): string {
+  if (!dateStr) return '';
+  if (dateStr.toLowerCase().includes('hold')) return 'On Hold';
+  
+  try {
+    const date = parseISO(dateStr);
+    if (isValid(date)) {
+      return format(date, 'MMM d, yyyy');
+    }
+  } catch {
+    // Return as-is if parsing fails
+  }
+  return dateStr;
+}
+
 export function LeadList({ 
   leads, 
   selectedId, 
@@ -120,10 +136,10 @@ export function LeadList({
           {leads.length} Lead{leads.length !== 1 ? 's' : ''}
         </span>
         <div className="flex items-center gap-4">
-          <SortButton field="company" label="Company" sort={sort} onSort={onSort} />
+          <SortButton field="customer" label="Customer" sort={sort} onSort={onSort} />
           <SortButton field="leadOrigin" label="Origin" sort={sort} onSort={onSort} />
           <SortButton field="managementLead" label="Manager" sort={sort} onSort={onSort} />
-          <SortButton field="deliveryLead" label="Delivery" sort={sort} onSort={onSort} />
+          <SortButton field="nextFollowup" label="Followup" sort={sort} onSort={onSort} />
         </div>
       </div>
 
@@ -150,25 +166,26 @@ export function LeadList({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                   <span className="font-medium truncate">
-                    {lead.company || lead.managementLead || 'Unnamed Lead'}
+                    {lead.customer}
                   </span>
                   <LeadOriginBadge origin={lead.leadOrigin} />
-                  <TeamTypeBadge type={lead.teamType} />
+                  <PimCmBadge type={lead.pimOrCm} />
+                  <LoiBadge issued={lead.loiIssued} signed={lead.loiSigned} />
                 </div>
                 <div className="text-sm text-muted-foreground truncate">
-                  {lead.nextSteps || 'No next steps defined'}
+                  {lead.currentProgress || 'No progress notes'}
                 </div>
               </div>
 
               {/* Right side info */}
               <div className="flex-shrink-0 text-right hidden sm:flex flex-col items-end gap-1">
                 <div className="flex items-center gap-2">
-                  <StatusIndicator active={lead.hasIntroMeeting} label="Intro" />
-                  <StatusIndicator active={Boolean(lead.hasWeeklyCalls)} label="Weekly" />
+                  <StatusIndicator active={lead.introductoryMeeting} label="Intro" />
+                  <StatusIndicator active={lead.weeklyCalls === 'Yes'} label="Weekly" />
                 </div>
-                {lead.managementLead && (
+                {lead.nextFollowup && (
                   <div className="text-xs text-muted-foreground">
-                    {lead.managementLead}
+                    {formatFollowupDate(lead.nextFollowup)}
                   </div>
                 )}
               </div>

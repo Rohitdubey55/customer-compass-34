@@ -32,6 +32,9 @@ export function LeadOriginBadge({ origin, className }: LeadOriginBadgeProps) {
     if (originLower.includes('harsh')) {
       return 'bg-pink-100 text-pink-700 border-pink-200';
     }
+    if (originLower.includes('jody')) {
+      return 'bg-cyan-100 text-cyan-700 border-cyan-200';
+    }
     return 'bg-muted text-muted-foreground border-border';
   };
 
@@ -50,12 +53,12 @@ export function LeadOriginBadge({ origin, className }: LeadOriginBadgeProps) {
   );
 }
 
-interface TeamTypeBadgeProps {
+interface PimCmBadgeProps {
   type: string;
   className?: string;
 }
 
-export function TeamTypeBadge({ type, className }: TeamTypeBadgeProps) {
+export function PimCmBadge({ type, className }: PimCmBadgeProps) {
   const getBadgeClass = () => {
     switch (type.toUpperCase()) {
       case 'PIM':
@@ -105,6 +108,33 @@ export function StatusIndicator({ active, label, className }: StatusIndicatorPro
         )}
       />
       {label && <span className="text-muted-foreground">{label}</span>}
+    </span>
+  );
+}
+
+interface LoiBadgeProps {
+  issued: boolean;
+  signed: boolean;
+  className?: string;
+}
+
+export function LoiBadge({ issued, signed, className }: LoiBadgeProps) {
+  if (!issued && !signed) return null;
+  
+  const status = signed ? 'Signed' : 'Issued';
+  const badgeClass = signed 
+    ? 'bg-green-100 text-green-700 border-green-200'
+    : 'bg-yellow-100 text-yellow-700 border-yellow-200';
+
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border',
+        badgeClass,
+        className
+      )}
+    >
+      LOI {status}
     </span>
   );
 }

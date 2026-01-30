@@ -1,19 +1,21 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Lead, LeadFilters, SortConfig, LeadApiResponse } from '@/types/customer';
+import { Lead, LeadFilters, SortConfig, LeadApiResponse, SortField } from '@/types/customer';
 import { fetchLeads, getLastUpdatedTime, clearCache } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
 
 const initialFilters: LeadFilters = {
   search: '',
   leadOrigins: [],
-  teamTypes: [],
+  pimOrCm: [],
   managementLeads: [],
   deliveryLeads: [],
+  strategicOwners: [],
   hasIntroMeeting: null,
+  hasLoi: null,
 };
 
 const initialSort: SortConfig = {
-  field: 'company',
+  field: 'customer',
   direction: 'asc'
 };
 
@@ -91,9 +93,10 @@ export function useLeads() {
     const safeLeads = leads || [];
     return {
       leadOrigins: [...new Set(safeLeads.map(l => l.leadOrigin))].filter(Boolean).sort(),
-      teamTypes: [...new Set(safeLeads.map(l => l.teamType))].filter(Boolean).sort(),
+      pimOrCm: [...new Set(safeLeads.map(l => l.pimOrCm))].filter(Boolean).sort(),
       managementLeads: [...new Set(safeLeads.map(l => l.managementLead))].filter(Boolean).sort(),
       deliveryLeads: [...new Set(safeLeads.map(l => l.deliveryLead))].filter(Boolean).sort(),
+      strategicOwners: [...new Set(safeLeads.map(l => l.strategicOwner))].filter(Boolean).sort(),
     };
   }, [leads]);
 
@@ -106,10 +109,11 @@ export function useLeads() {
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
       result = result.filter(l => 
-        l.company.toLowerCase().includes(searchLower) ||
+        l.customer.toLowerCase().includes(searchLower) ||
         l.managementLead.toLowerCase().includes(searchLower) ||
         l.deliveryLead.toLowerCase().includes(searchLower) ||
-        l.nextSteps.toLowerCase().includes(searchLower) ||
+        l.currentProgress.toLowerCase().includes(searchLower) ||
+        l.customerContact.toLowerCase().includes(searchLower) ||
         l.commodities.toLowerCase().includes(searchLower)
       );
     }
@@ -119,9 +123,9 @@ export function useLeads() {
       result = result.filter(l => filters.leadOrigins.includes(l.leadOrigin));
     }
 
-    // Team Type filter
-    if (filters.teamTypes.length > 0) {
-      result = result.filter(l => filters.teamTypes.includes(l.teamType));
+    // PIM or CM filter
+    if (filters.pimOrCm.length > 0) {
+      result = result.filter(l => filters.pimOrCm.includes(l.pimOrCm));
     }
 
     // Management Lead filter
@@ -134,9 +138,19 @@ export function useLeads() {
       result = result.filter(l => filters.deliveryLeads.includes(l.deliveryLead));
     }
 
+    // Strategic Owner filter
+    if (filters.strategicOwners.length > 0) {
+      result = result.filter(l => filters.strategicOwners.includes(l.strategicOwner));
+    }
+
     // Intro Meeting filter
     if (filters.hasIntroMeeting !== null) {
-      result = result.filter(l => l.hasIntroMeeting === filters.hasIntroMeeting);
+      result = result.filter(l => l.introductoryMeeting === filters.hasIntroMeeting);
+    }
+
+    // LOI filter
+    if (filters.hasLoi !== null) {
+      result = result.filter(l => (l.loiIssued || l.loiSigned) === filters.hasLoi);
     }
 
     // Sorting
@@ -145,9 +159,9 @@ export function useLeads() {
       let bVal = '';
 
       switch (sort.field) {
-        case 'company':
-          aVal = a.company.toLowerCase();
-          bVal = b.company.toLowerCase();
+        case 'customer':
+          aVal = a.customer.toLowerCase();
+          bVal = b.customer.toLowerCase();
           break;
         case 'leadOrigin':
           aVal = a.leadOrigin.toLowerCase();
@@ -160,6 +174,10 @@ export function useLeads() {
         case 'deliveryLead':
           aVal = a.deliveryLead.toLowerCase();
           bVal = b.deliveryLead.toLowerCase();
+          break;
+        case 'nextFollowup':
+          aVal = a.nextFollowup.toLowerCase();
+          bVal = b.nextFollowup.toLowerCase();
           break;
       }
 
@@ -177,7 +195,7 @@ export function useLeads() {
     return safeLeads.find(l => l.id === selectedLeadId) || null;
   }, [leads, selectedLeadId]);
 
-  const toggleSort = useCallback((field: SortConfig['field']) => {
+  const toggleSort = useCallback((field: SortField) => {
     setSort(prev => ({
       field,
       direction: prev.field === field && prev.direction === 'asc' ? 'desc' : 'asc'
@@ -198,10 +216,12 @@ export function useLeads() {
   const hasActiveFilters = useMemo(() => 
     filters.search !== '' ||
     filters.leadOrigins.length > 0 ||
-    filters.teamTypes.length > 0 ||
+    filters.pimOrCm.length > 0 ||
     filters.managementLeads.length > 0 ||
     filters.deliveryLeads.length > 0 ||
-    filters.hasIntroMeeting !== null
+    filters.strategicOwners.length > 0 ||
+    filters.hasIntroMeeting !== null ||
+    filters.hasLoi !== null
   , [filters]);
 
   return {

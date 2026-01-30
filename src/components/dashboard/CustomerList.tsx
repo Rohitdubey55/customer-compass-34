@@ -1,25 +1,15 @@
-import { ArrowUpDown, ArrowUp, ArrowDown, User } from 'lucide-react';
-import { Customer, SortConfig, SortField } from '@/types/customer';
-import { StatusBadge, TierBadge } from './StatusBadge';
+import { ArrowUpDown, ArrowUp, ArrowDown, Building2 } from 'lucide-react';
+import { Lead, SortConfig, SortField } from '@/types/customer';
+import { LeadOriginBadge, TeamTypeBadge, StatusIndicator } from './StatusBadge';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
 
-interface CustomerListProps {
-  customers: Customer[];
+interface LeadListProps {
+  leads: Lead[];
   selectedId: string | null;
   onSelect: (id: string) => void;
   sort: SortConfig;
   onSort: (field: SortField) => void;
   isLoading: boolean;
-}
-
-function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
 }
 
 function SortButton({ 
@@ -61,7 +51,7 @@ function SortButton({
   );
 }
 
-function CustomerRowSkeleton() {
+function LeadRowSkeleton() {
   return (
     <div className="customer-row animate-pulse">
       <div className="flex items-center gap-3">
@@ -82,39 +72,39 @@ function CustomerRowSkeleton() {
   );
 }
 
-export function CustomerList({ 
-  customers, 
+export function LeadList({ 
+  leads, 
   selectedId, 
   onSelect, 
   sort, 
   onSort,
   isLoading 
-}: CustomerListProps) {
+}: LeadListProps) {
   if (isLoading) {
     return (
       <div className="dashboard-panel flex-1 flex flex-col overflow-hidden">
         <div className="dashboard-header">
-          <span className="text-sm font-medium">Customers</span>
+          <span className="text-sm font-medium">Leads</span>
         </div>
         <div className="flex-1 overflow-auto custom-scrollbar">
           {Array.from({ length: 6 }).map((_, i) => (
-            <CustomerRowSkeleton key={i} />
+            <LeadRowSkeleton key={i} />
           ))}
         </div>
       </div>
     );
   }
 
-  if (customers.length === 0) {
+  if (leads.length === 0) {
     return (
       <div className="dashboard-panel flex-1 flex flex-col overflow-hidden">
         <div className="dashboard-header">
-          <span className="text-sm font-medium">Customers</span>
+          <span className="text-sm font-medium">Leads</span>
         </div>
         <div className="flex-1 flex items-center justify-center text-muted-foreground p-8 text-center">
           <div>
-            <User className="h-12 w-12 mx-auto mb-3 opacity-30" />
-            <p className="font-medium">No customers match your filters</p>
+            <Building2 className="h-12 w-12 mx-auto mb-3 opacity-30" />
+            <p className="font-medium">No leads match your filters</p>
             <p className="text-sm mt-1">Try adjusting your search or filter criteria</p>
           </div>
         </div>
@@ -127,54 +117,60 @@ export function CustomerList({
       {/* Header with sort controls */}
       <div className="dashboard-header flex-wrap gap-2">
         <span className="text-sm font-medium">
-          {customers.length} Customer{customers.length !== 1 ? 's' : ''}
+          {leads.length} Lead{leads.length !== 1 ? 's' : ''}
         </span>
         <div className="flex items-center gap-4">
-          <SortButton field="name" label="Name" sort={sort} onSort={onSort} />
           <SortButton field="company" label="Company" sort={sort} onSort={onSort} />
-          <SortButton field="status" label="Status" sort={sort} onSort={onSort} />
-          <SortButton field="last_contacted" label="Last Contact" sort={sort} onSort={onSort} />
+          <SortButton field="leadOrigin" label="Origin" sort={sort} onSort={onSort} />
+          <SortButton field="managementLead" label="Manager" sort={sort} onSort={onSort} />
+          <SortButton field="deliveryLead" label="Delivery" sort={sort} onSort={onSort} />
         </div>
       </div>
 
-      {/* Customer rows */}
+      {/* Lead rows */}
       <div className="flex-1 overflow-auto custom-scrollbar" role="listbox">
-        {customers.map((customer) => (
+        {leads.map((lead) => (
           <button
-            key={customer.id}
-            onClick={() => onSelect(customer.id)}
+            key={lead.id}
+            onClick={() => onSelect(lead.id)}
             className={cn(
               'customer-row w-full text-left',
-              selectedId === customer.id && 'customer-row-selected'
+              selectedId === lead.id && 'customer-row-selected'
             )}
             role="option"
-            aria-selected={selectedId === customer.id}
+            aria-selected={selectedId === lead.id}
           >
             <div className="flex items-center gap-3">
               {/* Avatar */}
               <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <span className="text-sm font-medium text-primary">
-                  {getInitials(customer.name)}
-                </span>
+                <Building2 className="h-5 w-5 text-primary" />
               </div>
 
               {/* Main info */}
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="font-medium truncate">{customer.name}</span>
-                  <StatusBadge status={customer.status} />
+                <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                  <span className="font-medium truncate">
+                    {lead.company || lead.managementLead || 'Unnamed Lead'}
+                  </span>
+                  <LeadOriginBadge origin={lead.leadOrigin} />
+                  <TeamTypeBadge type={lead.teamType} />
                 </div>
                 <div className="text-sm text-muted-foreground truncate">
-                  {customer.company}
+                  {lead.nextSteps || 'No next steps defined'}
                 </div>
               </div>
 
               {/* Right side info */}
-              <div className="flex-shrink-0 text-right hidden sm:block">
-                <TierBadge tier={customer.tier} className="mb-0.5" />
-                <div className="text-xs text-muted-foreground">
-                  {format(new Date(customer.last_contacted), 'MMM d, yyyy')}
+              <div className="flex-shrink-0 text-right hidden sm:flex flex-col items-end gap-1">
+                <div className="flex items-center gap-2">
+                  <StatusIndicator active={lead.hasIntroMeeting} label="Intro" />
+                  <StatusIndicator active={Boolean(lead.hasWeeklyCalls)} label="Weekly" />
                 </div>
+                {lead.managementLead && (
+                  <div className="text-xs text-muted-foreground">
+                    {lead.managementLead}
+                  </div>
+                )}
               </div>
             </div>
           </button>

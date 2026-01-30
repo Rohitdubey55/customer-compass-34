@@ -1,16 +1,17 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Search, X, User } from 'lucide-react';
+import { Search, X, Building2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Customer } from '@/types/customer';
+import { Lead } from '@/types/customer';
 import { cn } from '@/lib/utils';
+import { LeadOriginBadge, TeamTypeBadge } from './StatusBadge';
 
-interface CustomerSearchProps {
-  customers: Customer[];
-  onSelect: (customerId: string) => void;
+interface LeadSearchProps {
+  leads: Lead[];
+  onSelect: (leadId: string) => void;
   selectedId: string | null;
 }
 
-export function CustomerSearch({ customers, onSelect, selectedId }: CustomerSearchProps) {
+export function LeadSearch({ leads, onSelect, selectedId }: LeadSearchProps) {
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
@@ -20,17 +21,18 @@ export function CustomerSearch({ customers, onSelect, selectedId }: CustomerSear
   const suggestions = useMemo(() => {
     if (query.length < 2) return [];
     const searchLower = query.toLowerCase();
-    return customers
-      .filter(c => 
-        c.name.toLowerCase().includes(searchLower) ||
-        c.company.toLowerCase().includes(searchLower) ||
-        c.region.toLowerCase().includes(searchLower)
+    return leads
+      .filter(l => 
+        l.company.toLowerCase().includes(searchLower) ||
+        l.managementLead.toLowerCase().includes(searchLower) ||
+        l.deliveryLead.toLowerCase().includes(searchLower) ||
+        l.nextSteps.toLowerCase().includes(searchLower)
       )
       .slice(0, 8);
-  }, [query, customers]);
+  }, [query, leads]);
 
-  const handleSelect = useCallback((customerId: string) => {
-    onSelect(customerId);
+  const handleSelect = useCallback((leadId: string) => {
+    onSelect(leadId);
     setQuery('');
     setIsOpen(false);
     inputRef.current?.blur();
@@ -69,7 +71,6 @@ export function CustomerSearch({ customers, onSelect, selectedId }: CustomerSear
     }
   }, [isOpen, suggestions, highlightedIndex, query, handleSelect]);
 
-  // Scroll highlighted item into view
   useEffect(() => {
     if (isOpen && listRef.current) {
       const item = listRef.current.children[highlightedIndex] as HTMLElement;
@@ -79,7 +80,6 @@ export function CustomerSearch({ customers, onSelect, selectedId }: CustomerSear
     }
   }, [highlightedIndex, isOpen]);
 
-  // Open dropdown when typing
   useEffect(() => {
     if (query.length >= 2 && suggestions.length > 0) {
       setIsOpen(true);
@@ -89,7 +89,6 @@ export function CustomerSearch({ customers, onSelect, selectedId }: CustomerSear
     }
   }, [query, suggestions.length]);
 
-  // Close on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (inputRef.current && !inputRef.current.parentElement?.contains(e.target as Node)) {
@@ -100,16 +99,6 @@ export function CustomerSearch({ customers, onSelect, selectedId }: CustomerSear
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const getStatusBadgeClass = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'prospect': return 'badge-prospect';
-      case 'active': return 'badge-active';
-      case 'churned': return 'badge-churned';
-      case 'lead': return 'badge-lead';
-      default: return 'bg-muted text-muted-foreground';
-    }
-  };
-
   return (
     <div className="typeahead-container w-full max-w-md">
       <div className="relative">
@@ -117,7 +106,7 @@ export function CustomerSearch({ customers, onSelect, selectedId }: CustomerSear
         <Input
           ref={inputRef}
           type="text"
-          placeholder="Search customers, companies, regions…"
+          placeholder="Search leads, companies, people…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -127,10 +116,10 @@ export function CustomerSearch({ customers, onSelect, selectedId }: CustomerSear
             }
           }}
           className="pl-9 pr-9"
-          aria-label="Search customers"
+          aria-label="Search leads"
           aria-expanded={isOpen}
           aria-autocomplete="list"
-          aria-controls="customer-suggestions"
+          aria-controls="lead-suggestions"
           role="combobox"
         />
         {query && (
@@ -151,38 +140,36 @@ export function CustomerSearch({ customers, onSelect, selectedId }: CustomerSear
       {isOpen && suggestions.length > 0 && (
         <div 
           ref={listRef}
-          id="customer-suggestions"
+          id="lead-suggestions"
           className="typeahead-dropdown custom-scrollbar"
           role="listbox"
         >
-          {suggestions.map((customer, index) => (
+          {suggestions.map((lead, index) => (
             <button
-              key={customer.id}
-              onClick={() => handleSelect(customer.id)}
+              key={lead.id}
+              onClick={() => handleSelect(lead.id)}
               onMouseEnter={() => setHighlightedIndex(index)}
               className={cn(
                 'typeahead-item w-full text-left flex items-center gap-3',
                 index === highlightedIndex && 'typeahead-item-active',
-                customer.id === selectedId && 'bg-accent'
+                lead.id === selectedId && 'bg-accent'
               )}
               role="option"
               aria-selected={index === highlightedIndex}
             >
               <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                <User className="h-4 w-4 text-primary" />
+                <Building2 className="h-4 w-4 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium truncate">{customer.name}</span>
-                  <span className={cn(
-                    'text-xs px-1.5 py-0.5 rounded border uppercase font-medium',
-                    getStatusBadgeClass(customer.status)
-                  )}>
-                    {customer.status}
+                  <span className="font-medium truncate">
+                    {lead.company || lead.managementLead || 'Unnamed Lead'}
                   </span>
+                  <LeadOriginBadge origin={lead.leadOrigin} />
                 </div>
                 <div className="text-sm text-muted-foreground truncate">
-                  {customer.company} • {customer.region}
+                  {lead.managementLead && `${lead.managementLead}`}
+                  {lead.deliveryLead && ` → ${lead.deliveryLead}`}
                 </div>
               </div>
             </button>
@@ -192,7 +179,7 @@ export function CustomerSearch({ customers, onSelect, selectedId }: CustomerSear
 
       {isOpen && query.length >= 2 && suggestions.length === 0 && (
         <div className="typeahead-dropdown py-4 text-center text-muted-foreground">
-          No customers match "{query}"
+          No leads match "{query}"
         </div>
       )}
     </div>

@@ -1,40 +1,40 @@
-import { Customer } from '@/types/customer';
+import { Lead } from '@/types/customer';
 
-export function exportToJSON(customers: Customer | Customer[], filename: string): void {
-  const data = JSON.stringify(customers, null, 2);
+export function exportToJSON(leads: Lead | Lead[], filename: string): void {
+  const data = JSON.stringify(leads, null, 2);
   const blob = new Blob([data], { type: 'application/json' });
   downloadBlob(blob, `${filename}.json`);
 }
 
-export function exportToCSV(customers: Customer[], filename: string): void {
-  if (customers.length === 0) return;
+export function exportToCSV(leads: Lead[], filename: string): void {
+  if (leads.length === 0) return;
 
   const headers = [
     'ID',
-    'Name',
     'Company',
-    'Email',
-    'Phone',
-    'Region',
-    'Status',
-    'Tier',
-    'Last Contacted',
-    'Notes',
-    'Attachments'
+    'Lead Origin',
+    'Team Type',
+    'Management Lead',
+    'Intro Meeting',
+    'Delivery Lead',
+    'Weekly Calls',
+    'Next Steps',
+    'Info',
+    'Commodities'
   ];
 
-  const rows = customers.map(c => [
-    c.id,
-    escapeCsvValue(c.name),
-    escapeCsvValue(c.company),
-    c.email,
-    c.phone,
-    c.region,
-    c.status,
-    c.tier,
-    c.last_contacted,
-    escapeCsvValue(c.notes),
-    c.attachments.join('; ')
+  const rows = leads.map(l => [
+    l.id,
+    escapeCsvValue(l.company),
+    escapeCsvValue(l.leadOrigin),
+    l.teamType,
+    escapeCsvValue(l.managementLead),
+    l.hasIntroMeeting ? 'Yes' : 'No',
+    escapeCsvValue(l.deliveryLead),
+    l.hasWeeklyCalls ? 'Yes' : 'No',
+    escapeCsvValue(l.nextSteps),
+    escapeCsvValue(l.info),
+    escapeCsvValue(l.commodities)
   ]);
 
   const csvContent = [
@@ -47,6 +47,7 @@ export function exportToCSV(customers: Customer[], filename: string): void {
 }
 
 function escapeCsvValue(value: string): string {
+  if (!value) return '';
   if (value.includes(',') || value.includes('"') || value.includes('\n')) {
     return `"${value.replace(/"/g, '""')}"`;
   }

@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { useCustomers } from '@/hooks/useCustomers';
+import { useLeads } from '@/hooks/useLeads';
 import { DashboardHeader } from './DashboardHeader';
-import { CustomerFilters } from './CustomerFilters';
-import { CustomerList } from './CustomerList';
-import { CustomerDetail } from './CustomerDetail';
+import { LeadFilters } from './CustomerFilters';
+import { LeadList } from './CustomerList';
+import { LeadDetail } from './CustomerDetail';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Input } from '@/components/ui/input';
 import { Search, AlertCircle, RefreshCw } from 'lucide-react';
@@ -11,8 +11,8 @@ import { Button } from '@/components/ui/button';
 
 export function CustomerDashboard() {
   const {
-    customers,
-    allCustomers,
+    leads,
+    allLeads,
     isLoading,
     error,
     lastUpdated,
@@ -24,18 +24,18 @@ export function CustomerDashboard() {
     filterOptions,
     sort,
     toggleSort,
-    selectedCustomer,
-    selectedCustomerId,
-    setSelectedCustomerId,
+    selectedLead,
+    selectedLeadId,
+    setSelectedLeadId,
     localNotes,
     updateLocalNotes,
-  } = useCustomers();
+  } = useLeads();
 
   const isMobile = useIsMobile();
   const [showMobileDetail, setShowMobileDetail] = useState(false);
 
-  const handleSelectCustomer = (id: string) => {
-    setSelectedCustomerId(id);
+  const handleSelectLead = (id: string) => {
+    setSelectedLeadId(id);
     if (isMobile) {
       setShowMobileDetail(true);
     }
@@ -46,14 +46,14 @@ export function CustomerDashboard() {
   };
 
   // Error state
-  if (error && allCustomers.length === 0) {
+  if (error && allLeads.length === 0) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="text-center max-w-md">
           <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
             <AlertCircle className="h-8 w-8 text-destructive" />
           </div>
-          <h2 className="text-xl font-semibold mb-2">Failed to load customers</h2>
+          <h2 className="text-xl font-semibold mb-2">Failed to load leads</h2>
           <p className="text-muted-foreground mb-4">{error}</p>
           <Button onClick={refresh}>
             <RefreshCw className="h-4 w-4 mr-2" />
@@ -68,10 +68,10 @@ export function CustomerDashboard() {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header with search */}
       <DashboardHeader
-        customers={customers}
-        allCustomers={allCustomers}
-        onSelectCustomer={handleSelectCustomer}
-        selectedId={selectedCustomerId}
+        leads={leads}
+        allLeads={allLeads}
+        onSelectLead={handleSelectLead}
+        selectedId={selectedLeadId}
         lastUpdated={lastUpdated}
         onRefresh={refresh}
         isLoading={isLoading}
@@ -85,7 +85,7 @@ export function CustomerDashboard() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Filter by name, company, email..."
+              placeholder="Filter by company, person, notes..."
               value={filters.search}
               onChange={(e) => updateFilter('search', e.target.value)}
               className="pl-9 h-8"
@@ -93,7 +93,7 @@ export function CustomerDashboard() {
           </div>
 
           {/* Filter controls */}
-          <CustomerFilters
+          <LeadFilters
             filters={filters}
             filterOptions={filterOptions}
             onUpdateFilter={updateFilter}
@@ -105,33 +105,33 @@ export function CustomerDashboard() {
 
       {/* Main content area */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Customer list - left panel */}
+        {/* Lead list - left panel */}
         <div className="flex-1 lg:max-w-[55%] xl:max-w-[60%] p-4 lg:p-6 overflow-hidden flex flex-col">
-          <CustomerList
-            customers={customers}
-            selectedId={selectedCustomerId}
-            onSelect={handleSelectCustomer}
+          <LeadList
+            leads={leads}
+            selectedId={selectedLeadId}
+            onSelect={handleSelectLead}
             sort={sort}
             onSort={toggleSort}
             isLoading={isLoading}
           />
         </div>
 
-        {/* Customer detail - right panel (desktop) */}
+        {/* Lead detail - right panel (desktop) */}
         {!isMobile && (
           <div className="hidden lg:flex lg:w-[45%] xl:w-[40%] p-4 lg:p-6 pl-0">
-            <CustomerDetail
-              customer={selectedCustomer}
+            <LeadDetail
+              lead={selectedLead}
               localNotes={localNotes}
               onUpdateNotes={updateLocalNotes}
             />
           </div>
         )}
 
-        {/* Customer detail - mobile overlay */}
-        {isMobile && showMobileDetail && selectedCustomer && (
-          <CustomerDetail
-            customer={selectedCustomer}
+        {/* Lead detail - mobile overlay */}
+        {isMobile && showMobileDetail && selectedLead && (
+          <LeadDetail
+            lead={selectedLead}
             localNotes={localNotes}
             onUpdateNotes={updateLocalNotes}
             onClose={handleCloseMobileDetail}

@@ -1,15 +1,15 @@
 import { RefreshCw, Download, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { CustomerSearch } from './CustomerSearch';
-import { Customer } from '@/types/customer';
+import { LeadSearch } from './CustomerSearch';
+import { Lead } from '@/types/customer';
 import { exportToCSV } from '@/lib/export';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
 interface DashboardHeaderProps {
-  customers: Customer[];
-  allCustomers: Customer[];
-  onSelectCustomer: (id: string) => void;
+  leads: Lead[];
+  allLeads: Lead[];
+  onSelectLead: (id: string) => void;
   selectedId: string | null;
   lastUpdated: Date | null;
   onRefresh: () => void;
@@ -17,27 +17,27 @@ interface DashboardHeaderProps {
 }
 
 export function DashboardHeader({
-  customers,
-  allCustomers,
-  onSelectCustomer,
+  leads,
+  allLeads,
+  onSelectLead,
   selectedId,
   lastUpdated,
   onRefresh,
   isLoading,
 }: DashboardHeaderProps) {
   const handleBulkExport = () => {
-    if (customers.length === 0) {
+    if (leads.length === 0) {
       toast({ 
-        title: 'No customers to export', 
-        description: 'Adjust your filters to include customers',
+        title: 'No leads to export', 
+        description: 'Adjust your filters to include leads',
         variant: 'destructive' 
       });
       return;
     }
-    exportToCSV(customers, `customers-export-${format(new Date(), 'yyyy-MM-dd')}`);
+    exportToCSV(leads, `leads-export-${format(new Date(), 'yyyy-MM-dd')}`);
     toast({ 
       title: 'Export complete', 
-      description: `Exported ${customers.length} customer(s)` 
+      description: `Exported ${leads.length} lead(s)` 
     });
   };
 
@@ -48,12 +48,12 @@ export function DashboardHeader({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-lg font-bold text-primary-foreground">C</span>
+              <span className="text-lg font-bold text-primary-foreground">L</span>
             </div>
             <div>
-              <h1 className="text-xl font-semibold">Customer Dashboard</h1>
+              <h1 className="text-xl font-semibold">Leads Dashboard</h1>
               <p className="text-sm text-muted-foreground">
-                Manage and track your customers
+                Sales pipeline from Google Sheet
               </p>
             </div>
           </div>
@@ -83,21 +83,21 @@ export function DashboardHeader({
               variant="outline" 
               size="sm" 
               onClick={handleBulkExport}
-              disabled={customers.length === 0}
+              disabled={leads.length === 0}
             >
               <Download className="h-4 w-4 mr-1.5" />
               <span className="hidden sm:inline">Export</span>
-              {customers.length > 0 && (
-                <span className="ml-1 text-xs">({customers.length})</span>
+              {leads.length > 0 && (
+                <span className="ml-1 text-xs">({leads.length})</span>
               )}
             </Button>
           </div>
         </div>
 
         {/* Search bar */}
-        <CustomerSearch
-          customers={allCustomers}
-          onSelect={onSelectCustomer}
+        <LeadSearch
+          leads={allLeads}
+          onSelect={onSelectLead}
           selectedId={selectedId}
         />
       </div>

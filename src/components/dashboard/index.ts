@@ -1,7 +1,7 @@
 export { CustomerDashboard } from './CustomerDashboard';
-export { CustomerSearch } from './CustomerSearch';
-export { CustomerList } from './CustomerList';
-export { CustomerDetail } from './CustomerDetail';
-export { CustomerFilters } from './CustomerFilters';
+export { LeadSearch } from './CustomerSearch';
+export { LeadList } from './CustomerList';
+export { LeadDetail } from './CustomerDetail';
+export { LeadFilters } from './CustomerFilters';
 export { DashboardHeader } from './DashboardHeader';
-export { StatusBadge, TierBadge } from './StatusBadge';
+export { LeadOriginBadge, TeamTypeBadge, StatusIndicator } from './StatusBadge';

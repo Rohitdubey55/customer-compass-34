@@ -1,4 +1,4 @@
-import { X, Filter, CalendarDays } from 'lucide-react';
+import { X, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -6,33 +6,32 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { CustomerFilters as FilterType } from '@/types/customer';
-import { format } from 'date-fns';
+import { LeadFilters as FilterType } from '@/types/customer';
 
-interface CustomerFiltersProps {
+interface LeadFiltersProps {
   filters: FilterType;
   filterOptions: {
-    regions: string[];
-    statuses: string[];
-    tiers: string[];
+    leadOrigins: string[];
+    teamTypes: string[];
+    managementLeads: string[];
+    deliveryLeads: string[];
   };
   onUpdateFilter: <K extends keyof FilterType>(key: K, value: FilterType[K]) => void;
   onClearFilters: () => void;
   hasActiveFilters: boolean;
 }
 
-export function CustomerFilters({
+export function LeadFilters({
   filters,
   filterOptions,
   onUpdateFilter,
   onClearFilters,
   hasActiveFilters,
-}: CustomerFiltersProps) {
+}: LeadFiltersProps) {
   const toggleArrayFilter = (
-    key: 'regions' | 'statuses' | 'tiers',
+    key: 'leadOrigins' | 'teamTypes' | 'managementLeads' | 'deliveryLeads',
     value: string
   ) => {
     const current = filters[key];
@@ -43,43 +42,44 @@ export function CustomerFilters({
   };
 
   const activeFilterCount = 
-    filters.regions.length + 
-    filters.statuses.length + 
-    filters.tiers.length +
-    (filters.dateRange.from || filters.dateRange.to ? 1 : 0);
+    filters.leadOrigins.length + 
+    filters.teamTypes.length + 
+    filters.managementLeads.length +
+    filters.deliveryLeads.length +
+    (filters.hasIntroMeeting !== null ? 1 : 0);
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {/* Region Filter */}
+      {/* Lead Origin Filter */}
       <Popover>
         <PopoverTrigger asChild>
           <Button 
-            variant={filters.regions.length > 0 ? "default" : "outline"} 
+            variant={filters.leadOrigins.length > 0 ? "default" : "outline"} 
             size="sm"
             className="h-8"
           >
-            Region
-            {filters.regions.length > 0 && (
+            Lead Origin
+            {filters.leadOrigins.length > 0 && (
               <Badge variant="secondary" className="ml-1 h-5 px-1.5 bg-primary-foreground/20">
-                {filters.regions.length}
+                {filters.leadOrigins.length}
               </Badge>
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-48 p-2" align="start">
+        <PopoverContent className="w-48 p-2 max-h-60 overflow-auto" align="start">
           <div className="space-y-1">
-            {filterOptions.regions.map(region => (
-              <div key={region} className="flex items-center gap-2 py-1 px-1 rounded hover:bg-accent">
+            {filterOptions.leadOrigins.map(origin => (
+              <div key={origin} className="flex items-center gap-2 py-1 px-1 rounded hover:bg-accent">
                 <Checkbox
-                  id={`region-${region}`}
-                  checked={filters.regions.includes(region)}
-                  onCheckedChange={() => toggleArrayFilter('regions', region)}
+                  id={`origin-${origin}`}
+                  checked={filters.leadOrigins.includes(origin)}
+                  onCheckedChange={() => toggleArrayFilter('leadOrigins', origin)}
                 />
                 <Label 
-                  htmlFor={`region-${region}`} 
+                  htmlFor={`origin-${origin}`} 
                   className="flex-1 cursor-pointer text-sm"
                 >
-                  {region}
+                  {origin}
                 </Label>
               </div>
             ))}
@@ -87,73 +87,36 @@ export function CustomerFilters({
         </PopoverContent>
       </Popover>
 
-      {/* Status Filter */}
+      {/* Team Type Filter */}
       <Popover>
         <PopoverTrigger asChild>
           <Button 
-            variant={filters.statuses.length > 0 ? "default" : "outline"} 
+            variant={filters.teamTypes.length > 0 ? "default" : "outline"} 
             size="sm"
             className="h-8"
           >
-            Status
-            {filters.statuses.length > 0 && (
+            Team
+            {filters.teamTypes.length > 0 && (
               <Badge variant="secondary" className="ml-1 h-5 px-1.5 bg-primary-foreground/20">
-                {filters.statuses.length}
-              </Badge>
-            )}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-40 p-2" align="start">
-          <div className="space-y-1">
-            {filterOptions.statuses.map(status => (
-              <div key={status} className="flex items-center gap-2 py-1 px-1 rounded hover:bg-accent">
-                <Checkbox
-                  id={`status-${status}`}
-                  checked={filters.statuses.includes(status)}
-                  onCheckedChange={() => toggleArrayFilter('statuses', status)}
-                />
-                <Label 
-                  htmlFor={`status-${status}`} 
-                  className="flex-1 cursor-pointer text-sm"
-                >
-                  {status}
-                </Label>
-              </div>
-            ))}
-          </div>
-        </PopoverContent>
-      </Popover>
-
-      {/* Tier Filter */}
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button 
-            variant={filters.tiers.length > 0 ? "default" : "outline"} 
-            size="sm"
-            className="h-8"
-          >
-            Tier
-            {filters.tiers.length > 0 && (
-              <Badge variant="secondary" className="ml-1 h-5 px-1.5 bg-primary-foreground/20">
-                {filters.tiers.length}
+                {filters.teamTypes.length}
               </Badge>
             )}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-36 p-2" align="start">
           <div className="space-y-1">
-            {filterOptions.tiers.map(tier => (
-              <div key={tier} className="flex items-center gap-2 py-1 px-1 rounded hover:bg-accent">
+            {filterOptions.teamTypes.map(type => (
+              <div key={type} className="flex items-center gap-2 py-1 px-1 rounded hover:bg-accent">
                 <Checkbox
-                  id={`tier-${tier}`}
-                  checked={filters.tiers.includes(tier)}
-                  onCheckedChange={() => toggleArrayFilter('tiers', tier)}
+                  id={`type-${type}`}
+                  checked={filters.teamTypes.includes(type)}
+                  onCheckedChange={() => toggleArrayFilter('teamTypes', type)}
                 />
                 <Label 
-                  htmlFor={`tier-${tier}`} 
+                  htmlFor={`type-${type}`} 
                   className="flex-1 cursor-pointer text-sm"
                 >
-                  {tier}
+                  {type}
                 </Label>
               </div>
             ))}
@@ -161,55 +124,84 @@ export function CustomerFilters({
         </PopoverContent>
       </Popover>
 
-      {/* Date Range Filter */}
+      {/* Management Lead Filter */}
       <Popover>
         <PopoverTrigger asChild>
           <Button 
-            variant={(filters.dateRange.from || filters.dateRange.to) ? "default" : "outline"} 
+            variant={filters.managementLeads.length > 0 ? "default" : "outline"} 
             size="sm"
             className="h-8"
           >
-            <CalendarDays className="h-3.5 w-3.5 mr-1" />
-            {filters.dateRange.from && filters.dateRange.to ? (
-              <span className="text-xs">
-                {format(filters.dateRange.from, 'MMM d')} - {format(filters.dateRange.to, 'MMM d')}
-              </span>
-            ) : filters.dateRange.from ? (
-              <span className="text-xs">From {format(filters.dateRange.from, 'MMM d')}</span>
-            ) : filters.dateRange.to ? (
-              <span className="text-xs">Until {format(filters.dateRange.to, 'MMM d')}</span>
-            ) : (
-              'Date Range'
+            Manager
+            {filters.managementLeads.length > 0 && (
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5 bg-primary-foreground/20">
+                {filters.managementLeads.length}
+              </Badge>
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="range"
-            selected={{
-              from: filters.dateRange.from || undefined,
-              to: filters.dateRange.to || undefined,
-            }}
-            onSelect={(range) => {
-              onUpdateFilter('dateRange', {
-                from: range?.from || null,
-                to: range?.to || null,
-              });
-            }}
-            numberOfMonths={1}
-          />
-          {(filters.dateRange.from || filters.dateRange.to) && (
-            <div className="p-2 border-t">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="w-full"
-                onClick={() => onUpdateFilter('dateRange', { from: null, to: null })}
-              >
-                Clear dates
-              </Button>
-            </div>
-          )}
+        <PopoverContent className="w-48 p-2 max-h-60 overflow-auto" align="start">
+          <div className="space-y-1">
+            {filterOptions.managementLeads.map(lead => (
+              <div key={lead} className="flex items-center gap-2 py-1 px-1 rounded hover:bg-accent">
+                <Checkbox
+                  id={`mgmt-${lead}`}
+                  checked={filters.managementLeads.includes(lead)}
+                  onCheckedChange={() => toggleArrayFilter('managementLeads', lead)}
+                />
+                <Label 
+                  htmlFor={`mgmt-${lead}`} 
+                  className="flex-1 cursor-pointer text-sm"
+                >
+                  {lead}
+                </Label>
+              </div>
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      {/* Intro Meeting Filter */}
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button 
+            variant={filters.hasIntroMeeting !== null ? "default" : "outline"} 
+            size="sm"
+            className="h-8"
+          >
+            Intro Meeting
+            {filters.hasIntroMeeting !== null && (
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5 bg-primary-foreground/20">
+                {filters.hasIntroMeeting ? '✓' : '✗'}
+              </Badge>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-40 p-2" align="start">
+          <div className="space-y-1">
+            <button
+              onClick={() => onUpdateFilter('hasIntroMeeting', true)}
+              className={`w-full text-left px-2 py-1.5 rounded text-sm ${
+                filters.hasIntroMeeting === true ? 'bg-accent' : 'hover:bg-accent/50'
+              }`}
+            >
+              ✓ Has meeting
+            </button>
+            <button
+              onClick={() => onUpdateFilter('hasIntroMeeting', false)}
+              className={`w-full text-left px-2 py-1.5 rounded text-sm ${
+                filters.hasIntroMeeting === false ? 'bg-accent' : 'hover:bg-accent/50'
+              }`}
+            >
+              ✗ No meeting
+            </button>
+            <button
+              onClick={() => onUpdateFilter('hasIntroMeeting', null)}
+              className="w-full text-left px-2 py-1.5 rounded text-sm text-muted-foreground hover:bg-accent/50"
+            >
+              All
+            </button>
+          </div>
         </PopoverContent>
       </Popover>
 
@@ -222,7 +214,7 @@ export function CustomerFilters({
           className="h-8 text-muted-foreground hover:text-foreground"
         >
           <X className="h-3.5 w-3.5 mr-1" />
-          Clear all ({activeFilterCount})
+          Clear ({activeFilterCount})
         </Button>
       )}
     </div>
